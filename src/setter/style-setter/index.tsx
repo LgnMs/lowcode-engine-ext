@@ -1,4 +1,8 @@
+/* eslint-disable react/no-access-state-in-setstate */
 import * as React from 'react';
+import { toCSS } from 'cssjson';
+import { ConfigProvider, Select } from '@alifd/next';
+import Row from './components/row';
 import Layout from './pro/layout';
 import Position from './pro/position';
 import Font from './pro/font';
@@ -6,11 +10,11 @@ import Border from './pro/border';
 import Background from './pro/background';
 import CssCode from './components/css-code';
 import { StyleData } from './utils/types';
-import { ConfigProvider } from '@alifd/next';
 import './index.less';
+import { parseToCssCodePure, parseToStyleData } from './utils';
 
 interface StyleSetterProps {
-  value: StyleData;
+  value: string | null;
   defaultValue: string;
   placeholder: string;
   field: any;
@@ -19,7 +23,15 @@ interface StyleSetterProps {
   showModuleList: string[];
 }
 
-export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps> {
+export type CssStatus = 'default' | 'hover' | 'active' | 'focus';
+
+interface StyleSetterState {
+  styleData: Partial<Record<CssStatus, any>>;
+  cssStatus: CssStatus;
+  cssCodeVisiable: boolean;
+  initFlag: boolean;
+}
+export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps, StyleSetterState> {
   static defaultProps = {
     // 默认单位
     unit: 'px',
@@ -54,13 +66,13 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps>
     },
   };
 
-  state = { styleData: {}, cssCodeVisiable: false, initFlag: false };
+  state: StyleSetterState = { styleData: { default: {}, hover: {}, active: {}, focus: {} }, cssStatus: 'default', cssCodeVisiable: false, initFlag: false };
 
   componentDidMount() {
     const { value } = this.props;
     if (value) {
       this.setState({
-        styleData: value,
+        styleData: parseToStyleData(value, (this.props as any).selected._id),
       });
     }
 
@@ -82,36 +94,44 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps>
    */
   onStyleChange = (styleDataList: StyleData[]) => {
     const { onChange } = this.props;
-    const styleData: StyleData | any = Object.assign({}, this.state.styleData);
+    const styleObj: any = Object.assign({}, this.state.styleData[this.state.cssStatus]);
     styleDataList &&
       styleDataList.map((item) => {
         if (item.value == undefined || item.value == null) {
-          delete styleData[item.styleKey];
+          delete styleObj[item.styleKey];
         } else {
-          styleData[item.styleKey] = item.value;
+          styleObj[item.styleKey] = item.value;
         }
       });
 
+    const styleData = {
+      ...this.state.styleData,
+      [this.state.cssStatus]: styleObj
+    }
+    
     this.setState({
-      styleData,
+      styleData
     });
 
-    onChange && onChange(styleData);
-    console.log(styleData);
+    const cssText = parseToCssCodePure(styleData, (this.props as any).selected._id)
+
+    onChange && onChange(cssText);
   };
 
-  onStyleDataChange = (styleData: StyleData) => {
+  onStyleDataChange = (styleData: Partial<Record<CssStatus, any>>) => {
     this.setState({
-      styleData,
+      styleData
     });
     const { onChange } = this.props;
 
-    onChange && onChange(styleData);
+    const cssText = parseToCssCodePure(styleData, (this.props as any).selected._id)
+
+    onChange && onChange(cssText);
   };
 
   render() {
     const { isShowCssCode, showModuleList } = this.props;
-    const { styleData, cssCodeVisiable, initFlag } = this.state;
+    const { styleData, cssStatus, cssCodeVisiable, initFlag } = this.state;
 
     return (
       <ConfigProvider>
@@ -128,23 +148,34 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps>
               <CssCode styleData={styleData} onStyleDataChange={this.onStyleDataChange} />
             </div>
           )}
-
+          <Row title="状态" >
+            <Select
+              dataSource={[
+                { label: '默认', value: 'default' },
+                { label: ':hover', value: 'hover' },
+                { label: ':focus', value: 'focus' },
+                { label: ':active', value: 'active' },
+              ]}
+              value={cssStatus}
+              onChange={(val) => this.setState({ cssStatus: val })}
+            />
+          </Row>
           {showModuleList.filter((item) => item == 'layout').length > 0 && (
             <Layout
               onStyleChange={this.onStyleChange}
-              styleData={styleData}
+              styleData={styleData[cssStatus] || {}}
               {...this.props}
              />
           )}
 
           {showModuleList.filter((item) => item == 'font').length > 0 && (
-            <Font onStyleChange={this.onStyleChange} styleData={styleData} {...this.props} />
+            <Font onStyleChange={this.onStyleChange} styleData={styleData[cssStatus] || {}} {...this.props} />
           )}
 
           {showModuleList.filter((item) => item == 'background').length > 0 && (
             <Background
               onStyleChange={this.onStyleChange}
-              styleData={styleData}
+              styleData={styleData[cssStatus] || {}}
               {...this.props}
              />
           )}
@@ -152,7 +183,7 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps>
           {showModuleList.filter((item) => item == 'position').length > 0 && (
             <Position
               onStyleChange={this.onStyleChange}
-              styleData={styleData}
+              styleData={styleData[cssStatus] || {}}
               {...this.props}
              />
           )}
@@ -160,7 +191,7 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps>
           {showModuleList.filter((item) => item == 'border').length > 0 && (
             <Border
               onStyleChange={this.onStyleChange}
-              styleData={styleData}
+              styleData={styleData[cssStatus] || {}}
               {...this.props}
              />
           )}
@@ -168,7 +199,7 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps>
           {/* {initFlag && (
             <CssCode
               visible={cssCodeVisiable}
-              styleData={styleData}
+              styleData={styleData[cssStatus]}
               onStyleDataChange={this.onStyleDataChange}
               changeCssCodeVisiable={this.changeCssCodeVisiable}
             ></CssCode>

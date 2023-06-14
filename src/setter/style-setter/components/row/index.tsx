@@ -9,7 +9,7 @@ interface rowProps {
   // 如果不传styleData的话，radiogroup就变成非受控组件
   styleData?: StyleData | any;
   dataList?: Array<RadioItem>;
-  styleKey: string;
+  styleKey?: string;
   onStyleChange?: onStyleChange;
   value?: string;
   contentStyle?: any;
@@ -23,7 +23,7 @@ export default (props: rowProps) => {
       {title && (
         <div
           className={
-            styleData[styleKey]
+            styleKey && styleData[styleKey]
               ? `${!longTitle?'title-contaienr':'title-contaienr-long'} title-text title-text-active`
               : `${!longTitle?'title-contaienr':'title-contaienr-long'} title-text`
           }

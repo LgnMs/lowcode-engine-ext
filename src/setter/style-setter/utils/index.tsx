@@ -1,3 +1,4 @@
+import { CssStatus } from '..';
 import { StyleData } from './types';
 import { toCSS, toJSON } from 'cssjson';
 
@@ -91,32 +92,107 @@ export function hexify(color: string) {
   );
 }
 
-export function parseToCssCode(styleData: StyleData) {
-  const parseStyleData: any = {};
-  for (const styleKey in styleData) {
-    parseStyleData[toLine(styleKey)] = styleData[styleKey];
-  }
+export function parseToCssCode(styleData: Partial<Record<CssStatus, StyleData>>) {
+   
+  const obj: Partial<Record<string, any>> = {}
+  Object.keys(styleData).forEach(key => {
+    for (const styleKey in styleData[key as CssStatus]) {
+      obj[key] = obj[key] || {}
+      obj[key][toLine(styleKey)] = styleData[key][styleKey];
+    }
+  })
 
-  const cssJson = {
+  const cssJson: {
+    children: Partial<Record<string, any>>
+  } = {
     children: {
       '#main': {
         children: {},
-        attributes: parseStyleData,
-      },
+        attributes: {}
+      }
     },
   };
+  Object.keys(obj).forEach(key => {
+    let className = '#main'
+    if (key !== 'default') {
+      className += `:${key}`
+    }
+    cssJson.children[className] = { children: {}, attributes: obj[key] }
+  })
 
   return toCSS(cssJson);
 }
 
-export function parseToStyleData(cssCode: string) {
+export function parseToCssCodePure(styleData: Partial<Record<CssStatus, StyleData>>, id: string) {
+   
+  const obj: Partial<Record<string, any>> = {}
+  Object.keys(styleData).forEach(key => {
+    for (const styleKey in styleData[key as CssStatus]) {
+      obj[key] = obj[key] || {}
+      obj[key][toLine(styleKey)] = styleData[key][styleKey];
+    }
+  })
+
+  const cssJson: {
+    children: Partial<Record<string, any>>
+  } = {
+    children: {
+    },
+  };
+  Object.keys(obj).forEach(key => {
+    let keyName = `.${id}`
+      if (key !== 'default') {
+        keyName = `${keyName}:${key}`
+      }
+    cssJson.children[keyName] = { children: {}, attributes: obj[key] }
+  })
+
+  return toCSS(cssJson);
+}
+
+export function parseToStyleData(cssCode: string, id?: string) {
   const styleData = {};
   try {
     const cssJson = toJSON(cssCode);
-    const cssJsonData = cssJson?.children?.['#main']?.attributes;
-    for (const key in cssJsonData) {
-      styleData[toHump(key)] = cssJsonData[key];
-    }
+    Object.keys(cssJson.children).forEach(key => {
+      const cssJsonData = cssJson?.children?.[key]?.attributes;
+      const prepix = id ? `.${id}` : '#main';
+      const keyName = key === prepix ? 'default' : key.split(':')[1];
+      styleData[keyName] = styleData[keyName] || {}
+      for (const styleKey in cssJsonData) {
+        styleData[keyName][toHump(styleKey)] = cssJsonData[styleKey];
+      }
+    })
+    // const cssJsonData = cssJson?.children?.['#main']?.attributes;
+    // for (const key in cssJsonData) {
+    //   styleData[toHump(key)] = cssJsonData[key];
+    // }
+
+    // 转化key
+  } catch (e) {
+    console.error(e.message);
+  }
+
+  return styleData;
+}
+
+export function parseToStyleDataPure(cssCode: string) {
+  const styleData = {};
+  try {
+    const cssJson = toJSON(cssCode);
+    Object.keys(cssJson.children).forEach(key => {
+      const cssJsonData = cssJson?.children?.[key]?.attributes;
+      let keyName = key === '#main' ? 'default' : key.split(':')[1];
+      styleData[keyName] = styleData[keyName] || {}
+      for (const styleKey in cssJsonData) {
+        styleData[keyName][toHump(styleKey)] = cssJsonData[styleKey];
+      }
+    })
+    // const cssJsonData = cssJson?.children?.['#main']?.attributes;
+    // for (const key in cssJsonData) {
+    //   styleData[toHump(key)] = cssJsonData[key];
+    // }
+
     // 转化key
   } catch (e) {
     console.error(e.message);

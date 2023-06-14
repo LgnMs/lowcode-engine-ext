@@ -4,9 +4,10 @@ import { StyleData } from '../../utils/types';
 import { parseToCssCode, parseToStyleData } from '../../utils';
 import MonacoEditor from '@alilc/lowcode-plugin-base-monaco-editor';
 import Icon from '../../components/icon';
+import { CssStatus } from '../..';
 
 interface CodeProps {
-  styleData: StyleData | any;
+  styleData: Partial<Record<CssStatus, StyleData>> | any;
   onStyleDataChange: (val: any) => void;
 }
 
@@ -78,6 +79,7 @@ export default class CssCode extends React.Component<CodeProps> {
     const { onStyleDataChange } = this.props;
     const newStyleData = parseToStyleData(cssCode);
     // 检查是否和原来的styleData完全相同
+      console.log(newStyleData)
     if (newStyleData) {
       onStyleDataChange(newStyleData);
       this.setState({
