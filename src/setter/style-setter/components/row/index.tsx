@@ -39,8 +39,7 @@ export default (props: rowProps) => {
           <RadioGroup
             dataList={dataList}
             {...props}
-            // 区分是style类型的值还是其他普通的值，从styleData获取的是对象
-            value={typeof value != 'string' ? styleData && styleData[styleKey] : value}
+            value={styleData[styleKey]}
           ></RadioGroup>
         )}
       </div>

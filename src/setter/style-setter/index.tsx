@@ -1,7 +1,7 @@
 /* eslint-disable react/no-access-state-in-setstate */
 import * as React from 'react';
 import { toCSS } from 'cssjson';
-import { ConfigProvider, Select } from '@alifd/next';
+import { Button, ConfigProvider, Icon, Select } from '@alifd/next';
 import Row from './components/row';
 import Layout from './pro/layout';
 import Position from './pro/position';
@@ -11,7 +11,7 @@ import Background from './pro/background';
 import CssCode from './components/css-code';
 import { StyleData } from './utils/types';
 import './index.less';
-import { parseToCssCodePure, parseToStyleData } from './utils';
+import { parseToCssCode, parseToCssCodePure, parseToStyleData } from './utils';
 
 interface StyleSetterProps {
   value: string | null;
@@ -23,10 +23,12 @@ interface StyleSetterProps {
   showModuleList: string[];
 }
 
-export type CssStatus = 'default' | 'hover' | 'active' | 'focus';
+export type CssStatus = 'default' | 'hover' | 'active' | 'focus' | string;
 
 interface StyleSetterState {
   styleData: Partial<Record<CssStatus, any>>;
+  cssStatusList: Array<{label: CssStatus, value: string}>;
+  cssStatusListPre: Array<{label: CssStatus, value: string}>;
   cssStatus: CssStatus;
   cssCodeVisiable: boolean;
   initFlag: boolean;
@@ -66,13 +68,75 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps,
     },
   };
 
-  state: StyleSetterState = { styleData: { default: {}, hover: {}, active: {}, focus: {} }, cssStatus: 'default', cssCodeVisiable: false, initFlag: false };
+  state: StyleSetterState = { 
+    styleData: { 
+      default: {},
+      hover: {},
+      active: {},
+      focus: {} 
+    },
+    cssStatusListPre: [
+      { label: '默认', value: 'default' },
+      { label: ':hover', value: 'hover' },
+      { label: ':focus', value: 'focus' },
+      { label: ':active', value: 'active' },
+    ],
+    cssStatusList: [
+      { label: '默认', value: 'default' },
+      { label: ':hover', value: 'hover' },
+      { label: ':focus', value: 'focus' },
+      { label: ':active', value: 'active' },
+    ],
+    cssStatus: 'default',
+    cssCodeVisiable: false,
+    initFlag: false
+  };
 
   componentDidMount() {
     const { value } = this.props;
-    if (value) {
+
+    // 兼容原来将导出styleObj的情况
+    const selected = (this.props as any).selected; // 选中的节点
+    const styleObj = selected.getProps().getPropValue('style')
+    if (styleObj) {
       this.setState({
-        styleData: parseToStyleData(value, (this.props as any).selected._id),
+        styleData: {
+          ...this.state.styleData,
+          default: styleObj
+        }
+      }, () => {
+        const cssText = parseToCssCodePure(this.state.styleData, (this.props as any).selected._id)
+  
+        const { onChange } = this.props;
+        onChange && onChange(cssText);
+        const prop = selected.getProps().getProp('style');
+        prop.setValue({});
+        prop.remove({});
+      })
+    }
+    // 兼容代码结束
+
+    if (value) {
+      const obj = parseToStyleData(value, (this.props as any).selected._id)
+      this.setState({
+        styleData: obj,
+      }, () => {
+        const temp: Array<{label: CssStatus, value: string}> = []
+        Object.keys(this.state.styleData).forEach((key) => {
+          switch (key) {
+            case 'default':
+            case 'hover':
+            case 'active':
+            case 'focus':
+              break;
+            default:
+              temp.push({ label: key, value: key })
+          }
+        })
+        this.setState({
+          cssStatusList: [...this.state.cssStatusList, ...temp],
+          cssStatusListPre: [...this.state.cssStatusList, ...temp],
+        })
       });
     }
 
@@ -129,9 +193,79 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps,
     onChange && onChange(cssText);
   };
 
+  handleStatusSearch = (value: string) => {
+    this.setState({cssStatusList: [{label: value, value }]})
+  }
+  
+  handleStatusChang = (value: string) => {
+    let isNewFiled = true
+    this.state.cssStatusListPre.forEach(item => {
+      if (item.value === value) {
+        isNewFiled = false;
+      }
+    })
+
+    if (isNewFiled) {
+      this.setState({
+        cssStatusList: [
+          ...this.state.cssStatusListPre,
+          { label: value, value}
+        ],
+        cssStatusListPre: [
+          ...this.state.cssStatusListPre,
+          { label: value, value}
+        ]
+      })
+    } else {
+      this.setState({
+        cssStatusList: this.state.cssStatusListPre,
+      })
+    }
+    this.setState({ cssStatus: value })
+  }
+
+  handleStatusBlur = () => {
+    this.setState({
+      cssStatusList: this.state.cssStatusListPre,
+    })
+  }
+
   render() {
     const { isShowCssCode, showModuleList } = this.props;
     const { styleData, cssStatus, cssCodeVisiable, initFlag } = this.state;
+
+    const isDefaultStatus = (value: string) => {
+      switch (value) {
+        case 'default':
+        case 'hover':
+        case 'active':
+        case 'focus':
+          return true;
+        default:
+          return false;
+      }
+    }
+    const itemRender = (item: any) => {
+      const className = 'lowcode-setter-style-v2-select-status-item';
+      return <div className={className}>
+        {item.label}
+        {!isDefaultStatus(item.value) && <div
+          className={`${className}-close`}
+          onClick={() => {
+            this.setState({
+              cssStatusList: this.state.cssStatusList.filter((i) => i.value !== item.value),
+              cssStatusListPre: this.state.cssStatusListPre.filter((i) => i.value !== item.value),
+            })
+            this.setState({ cssStatus: 'default' })
+          }}
+        >
+          <Icon
+            size='xxs'
+            type="close" 
+          />
+        </div>}
+      </div>;
+    };
 
     return (
       <ConfigProvider>
@@ -150,14 +284,15 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps,
           )}
           <Row title="状态" >
             <Select
-              dataSource={[
-                { label: '默认', value: 'default' },
-                { label: ':hover', value: 'hover' },
-                { label: ':focus', value: 'focus' },
-                { label: ':active', value: 'active' },
-              ]}
+              showSearch
+              style={{ width: '90%' }}
+              filterLocal={false}
+              dataSource={this.state.cssStatusList}
+              onSearch={this.handleStatusSearch}
               value={cssStatus}
-              onChange={(val) => this.setState({ cssStatus: val })}
+              onChange={this.handleStatusChang}
+              onBlur={this.handleStatusBlur}
+              itemRender={itemRender}
             />
           </Row>
           {showModuleList.filter((item) => item == 'layout').length > 0 && (

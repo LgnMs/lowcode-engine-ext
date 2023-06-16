@@ -114,8 +114,17 @@ export function parseToCssCode(styleData: Partial<Record<CssStatus, StyleData>>)
   };
   Object.keys(obj).forEach(key => {
     let className = '#main'
-    if (key !== 'default') {
-      className += `:${key}`
+    switch (key) {
+      case 'hover':
+      case 'focus':
+      case 'active':
+        className += `:${key}`
+        break;
+      case 'default':
+        break;
+      default:
+        className += `-${key}`
+        break;
     }
     cssJson.children[className] = { children: {}, attributes: obj[key] }
   })
@@ -141,9 +150,18 @@ export function parseToCssCodePure(styleData: Partial<Record<CssStatus, StyleDat
   };
   Object.keys(obj).forEach(key => {
     let keyName = `.${id}`
-      if (key !== 'default') {
+    switch (key) {
+      case 'hover':
+      case 'focus':
+      case 'active':
         keyName = `${keyName}:${key}`
-      }
+        break;
+      case 'default':
+        break;
+      default:
+        keyName = `${keyName}-${key}`
+        break;
+    }
     cssJson.children[keyName] = { children: {}, attributes: obj[key] }
   })
 
@@ -157,7 +175,15 @@ export function parseToStyleData(cssCode: string, id?: string) {
     Object.keys(cssJson.children).forEach(key => {
       const cssJsonData = cssJson?.children?.[key]?.attributes;
       const prepix = id ? `.${id}` : '#main';
-      const keyName = key === prepix ? 'default' : key.split(':')[1];
+      let keyName = ''
+      if (key === prepix) {
+        keyName = 'default'
+      } else if (key.indexOf(':') > -1) {
+        keyName = key.split(':')[1]
+      } else {
+        const i = key.indexOf('-');
+        keyName = key.substring(i + 1);
+      }
       styleData[keyName] = styleData[keyName] || {}
       for (const styleKey in cssJsonData) {
         styleData[keyName][toHump(styleKey)] = cssJsonData[styleKey];
