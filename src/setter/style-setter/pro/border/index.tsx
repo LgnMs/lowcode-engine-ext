@@ -24,7 +24,7 @@ const BorderDirectionMap = {
   borderRight: 'borderRight',
   borderTop: 'borderTop',
   borderBottom: 'borderBottom',
-  // border:'border'
+  border:'border'
 };
 
 const borderRadiusMap = {
