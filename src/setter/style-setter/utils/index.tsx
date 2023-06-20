@@ -176,7 +176,7 @@ export function parseToStyleData(cssCode: string, id?: string) {
       const cssJsonData = cssJson?.children?.[key]?.attributes;
       const prepix = id ? `.${id}` : '#main';
       let keyName = ''
-      if (key === prepix) {
+      if (key === prepix || key.indexOf(':') === -1 || key.indexOf('-') === -1) {
         keyName = 'default'
       } else if (key.indexOf(':') > -1) {
         keyName = key.split(':')[1]
@@ -184,6 +184,7 @@ export function parseToStyleData(cssCode: string, id?: string) {
         const i = key.indexOf('-');
         keyName = key.substring(i + 1);
       }
+
       styleData[keyName] = styleData[keyName] || {}
       for (const styleKey in cssJsonData) {
         styleData[keyName][toHump(styleKey)] = cssJsonData[styleKey];
