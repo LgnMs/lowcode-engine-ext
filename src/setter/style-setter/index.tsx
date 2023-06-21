@@ -1,7 +1,6 @@
 /* eslint-disable react/no-access-state-in-setstate */
 import * as React from 'react';
-import { toCSS } from 'cssjson';
-import { Button, ConfigProvider, Icon, Select } from '@alifd/next';
+import { ConfigProvider, Icon, Select } from '@alifd/next';
 import Row from './components/row';
 import Layout from './pro/layout';
 import Position from './pro/position';
@@ -11,7 +10,7 @@ import Background from './pro/background';
 import CssCode from './components/css-code';
 import { StyleData } from './utils/types';
 import './index.less';
-import { parseToCssCode, parseToCssCodePure, parseToStyleData } from './utils';
+import { parseToCssCodePure, parseToStyleData } from './utils';
 
 interface StyleSetterProps {
   value: string | null;
@@ -232,7 +231,7 @@ export default class StyleSetterV2 extends React.PureComponent<StyleSetterProps,
 
   render() {
     const { isShowCssCode, showModuleList } = this.props;
-    const { styleData, cssStatus, cssCodeVisiable, initFlag } = this.state;
+    const { styleData, cssStatus } = this.state;
 
     const isDefaultStatus = (value: string) => {
       switch (value) {
