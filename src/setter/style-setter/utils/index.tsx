@@ -174,15 +174,15 @@ export function parseToStyleData(cssCode: string, id?: string) {
     const cssJson = toJSON(cssCode);
     Object.keys(cssJson.children).forEach(key => {
       const cssJsonData = cssJson?.children?.[key]?.attributes;
-      const prepix = id ? `.${id}` : '#main';
+      // const prepix = id ? `.${id}` : '#main';
       let keyName = ''
-      if (key === prepix || key.indexOf(':') === -1 || key.indexOf('-') === -1) {
-        keyName = 'default'
-      } else if (key.indexOf(':') > -1) {
+      if (key.indexOf(':') > -1) {
         keyName = key.split(':')[1]
-      } else {
+      } else if (key.indexOf('-') > -1) {
         const i = key.indexOf('-');
         keyName = key.substring(i + 1);
+      } else {
+        keyName = 'default'
       }
 
       styleData[keyName] = styleData[keyName] || {}
