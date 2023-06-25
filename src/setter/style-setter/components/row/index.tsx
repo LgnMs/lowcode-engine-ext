@@ -39,7 +39,7 @@ export default (props: rowProps) => {
           <RadioGroup
             dataList={dataList}
             {...props}
-            value={styleData ? styleData[styleKey] : ''}
+            value={(styleData ? styleData[styleKey] : '') || value}
           ></RadioGroup>
         )}
       </div>

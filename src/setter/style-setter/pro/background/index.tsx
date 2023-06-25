@@ -17,6 +17,7 @@ interface fontProps {
   unit?: string;
 }
 export default (props: fontProps) => {
+  let isFirst = true;
   const { onStyleChange, styleData } = props;
   const { backgroundType, backgroundSize, backgroundPosition, backgroundRepeat } = backgroundConfig;
   const [bgType, setBgType] = useState(null);
