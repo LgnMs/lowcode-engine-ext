@@ -72,6 +72,10 @@
     "registry": "https://registry.npmjs.org/"
   },
   "license": "MIT",
-  "homepage": "https://unpkg.com/@alilc/lowcode-engine-ext@1.0.6-beta.25/build/index.html",
+<<<<<<< HEAD
+  "homepage": "https://unpkg.com/@alilc/lowcode-engine-ext@1.0.6-beta.29/build/index.html",
+=======
+  "homepage": "https://unpkg.com/@alilc/lowcode-engine-ext@1.0.6/build/index.html",
+>>>>>>> lowcode-engine-ext/main
   "repository": "git@github.com:alibaba/lowcode-engine-ext.git"
 }
