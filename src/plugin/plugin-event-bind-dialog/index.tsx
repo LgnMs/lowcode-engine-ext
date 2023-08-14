@@ -384,7 +384,7 @@ export default class EventBindDialog extends Component<PluginProps> {
               <MonacoEditor
                 value={paramStr}
                 {...defaultEditorOption}
-                {...{ language: 'text' }}
+                {...{ language: 'json' }}
                 onChange={(newCode: string) => this.onChangeEditor(newCode)}
               />
               {!useParams && <div className="mask" />}
